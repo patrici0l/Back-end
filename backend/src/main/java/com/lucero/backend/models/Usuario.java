@@ -17,19 +17,30 @@ public class Usuario {
     @Column(name = "firebase_uid", unique = true)
     private String firebaseUid;
 
+    @Column(nullable = false)
     private String nombre;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(name = "foto_url")
     private String fotoUrl;
 
-    private String rol;
+    @Column(nullable = false)
+    private String rol; 
 
     @Column(name = "password_hash")
     private String passwordHash;
 
-    private boolean activo;
+    @Column(nullable = false)
+    private Boolean activo = true;
 
-    @Column(name = "creado_en")
+    // JPA llenará esto automáticamente gracias a @PrePersist
+    @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
+
+    @PrePersist
+    protected void onCreate() {
+        this.creadoEn = LocalDateTime.now();
+    }
 }

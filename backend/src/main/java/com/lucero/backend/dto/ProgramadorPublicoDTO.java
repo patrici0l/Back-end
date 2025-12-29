@@ -18,7 +18,6 @@ public class ProgramadorPublicoDTO {
     private List<String> horasDisponibles;
     private UUID usuarioId;
 
-    // ✅ CONSTRUCTOR MANUAL PARA EVITAR EL ERROR EN VS CODE
     public ProgramadorPublicoDTO(UUID id, String nombre, String foto, String especialidad,
             String descripcion, String disponibilidad,
             List<String> horasDisponibles, UUID usuarioId) {
