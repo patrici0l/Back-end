@@ -47,11 +47,10 @@ public class AsesoriaController {
                 .orElseThrow(() -> new RuntimeException("No tienes perfil de programador"));
     }
 
-    // --- ENDPOINTS PÚBLICOS ---
-
     @PostMapping("/publica")
     public ResponseEntity<?> crearPublica(@RequestBody Map<String, Object> body) {
         try {
+            // 1. Validar Programador
             UUID idProgramador = UUID.fromString((String) body.get("idProgramador"));
             Programador prog = programadorRepository.findById(idProgramador)
                     .orElseThrow(() -> new RuntimeException("Programador no existe"));
@@ -59,7 +58,21 @@ public class AsesoriaController {
             Asesoria a = new Asesoria();
             a.setProgramador(prog);
             a.setNombreSolicitante((String) body.get("nombreSolicitante"));
-            a.setEmailSolicitante((String) body.get("emailSolicitante"));
+
+            // 2. OBTENER EMAIL
+            String email = (String) body.get("emailSolicitante");
+            a.setEmailSolicitante(email);
+
+            // =================================================================
+            // 🔥 MAGIA AQUÍ: VINCULACIÓN AUTOMÁTICA
+            // Buscamos si ya existe un usuario con ese email y lo conectamos.
+            // Así aparecerá en "Mis Asesorías" inmediatamente.
+            // =================================================================
+            usuarioRepository.findByEmail(email).ifPresent(usuarioEncontrado -> {
+                a.setUsuario(usuarioEncontrado);
+            });
+
+            // 3. Resto de datos
             a.setComentario((String) body.getOrDefault("comentario", ""));
             a.setFecha(LocalDate.parse((String) body.get("fecha")));
             a.setHora(LocalTime.parse((String) body.get("hora")));
@@ -159,4 +172,54 @@ public class AsesoriaController {
 
         return ResponseEntity.ok(guardada);
     }
-}
+    // ... resto de tu código existente ...
+
+    // --- NUEVO ENDPOINT PARA FILTROS ---
+
+    @GetMapping("/programador/filtradas")
+    public ResponseEntity<?> asesoriasFiltradas(
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta) {
+        try {
+            Programador p = obtenerProgramadorActual();
+
+            // Caso 1: sin filtros (devuelve todo lo del programador)
+            if (estado == null && desde == null && hasta == null) {
+                return ResponseEntity.ok(
+                        asesoriaRepository.findByProgramadorId(p.getId()));
+            }
+
+            // Caso 2: solo estado
+            if (estado != null && desde == null && hasta == null) {
+                return ResponseEntity.ok(
+                        asesoriaRepository.findByProgramadorIdAndEstado(p.getId(), estado));
+            }
+
+            // Caso 3: rango de fechas (sin importar estado)
+            if (estado == null && desde != null && hasta != null) {
+                return ResponseEntity.ok(
+                        asesoriaRepository.findByProgramadorIdAndFechaBetween(
+                                p.getId(),
+                                LocalDate.parse(desde),
+                                LocalDate.parse(hasta)));
+            }
+
+            // Caso 4: estado + rango de fechas
+            if (estado != null && desde != null && hasta != null) {
+                return ResponseEntity.ok(
+                        asesoriaRepository.findByProgramadorIdAndEstadoAndFechaBetween(
+                                p.getId(),
+                                estado,
+                                LocalDate.parse(desde),
+                                LocalDate.parse(hasta)));
+            }
+
+            return ResponseEntity.badRequest().body("Combinación de filtros no válida (ej. falta fecha inicio o fin)");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al filtrar: " + e.getMessage());
+        }
+    }
+
+} // Fin de la clase AsesoriaController

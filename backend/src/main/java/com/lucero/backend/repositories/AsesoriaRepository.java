@@ -14,42 +14,57 @@ import java.util.Map;
 
 public interface AsesoriaRepository extends JpaRepository<Asesoria, UUID> {
 
-    // =========================
-    // MÉTODOS ESTÁNDAR
-    // =========================
+        // =========================
+        // MÉTODOS ESTÁNDAR
+        // =========================
 
-    List<Asesoria> findByProgramadorId(UUID programadorId);
+        List<Asesoria> findByProgramadorId(UUID programadorId);
 
-    // Para saber horas ocupadas en una fecha
-    List<Asesoria> findByProgramadorIdAndFecha(UUID programadorId, LocalDate fecha);
+        // Para saber horas ocupadas en una fecha
+        List<Asesoria> findByProgramadorIdAndFecha(UUID programadorId, LocalDate fecha);
 
-    List<Asesoria> findByUsuarioId(UUID usuarioId);
+        List<Asesoria> findByProgramadorIdAndEstado(
+                        UUID programadorId,
+                        String estado);
 
-    // ESTE ES EL QUE PEDISTE (Ya estaba, lo mantenemos aquí)
-    List<Asesoria> findByProgramadorIdOrderByFechaAscHoraAsc(UUID programadorId);
+        List<Asesoria> findByProgramadorIdAndFechaBetween(
+                        UUID programadorId,
+                        LocalDate desde,
+                        LocalDate hasta);
 
-    List<Asesoria> findByProgramadorIdAndFechaAndEstadoNot(UUID programadorId, LocalDate fecha, String estado);
+        List<Asesoria> findByProgramadorIdAndEstadoAndFechaBetween(
+                        UUID programadorId,
+                        String estado,
+                        LocalDate desde,
+                        LocalDate hasta);
 
-    Optional<Asesoria> findByProgramadorIdAndFechaAndHora(UUID programadorId, LocalDate fecha,
-            java.time.LocalTime hora);
+        List<Asesoria> findByUsuarioId(UUID usuarioId);
 
-    boolean existsByProgramadorIdAndFechaAndHoraAndEstadoNot(
-            UUID programadorId,
-            LocalDate fecha,
-            LocalTime hora,
-            String estado);
+        // ESTE ES EL QUE PEDISTE (Ya estaba, lo mantenemos aquí)
+        List<Asesoria> findByProgramadorIdOrderByFechaAscHoraAsc(UUID programadorId);
 
-    long countByProgramadorIdAndEstado(UUID programadorId, String estado);
+        List<Asesoria> findByProgramadorIdAndFechaAndEstadoNot(UUID programadorId, LocalDate fecha, String estado);
 
-    long countByProgramadorId(UUID programadorId);
+        Optional<Asesoria> findByProgramadorIdAndFechaAndHora(UUID programadorId, LocalDate fecha,
+                        java.time.LocalTime hora);
 
-    // Serie por fecha (para gráfico)
-    @Query("""
-                SELECT a.fecha as fecha, COUNT(a) as total
-                FROM Asesoria a
-                WHERE a.programador.id = :programadorId
-                GROUP BY a.fecha
-                ORDER BY a.fecha
-            """)
-    List<Map<String, Object>> countPorFecha(@Param("programadorId") UUID programadorId);
+        boolean existsByProgramadorIdAndFechaAndHoraAndEstadoNot(
+                        UUID programadorId,
+                        LocalDate fecha,
+                        LocalTime hora,
+                        String estado);
+
+        long countByProgramadorIdAndEstado(UUID programadorId, String estado);
+
+        long countByProgramadorId(UUID programadorId);
+
+        // Serie por fecha (para gráfico)
+        @Query("""
+                            SELECT a.fecha as fecha, COUNT(a) as total
+                            FROM Asesoria a
+                            WHERE a.programador.id = :programadorId
+                            GROUP BY a.fecha
+                            ORDER BY a.fecha
+                        """)
+        List<Map<String, Object>> countPorFecha(@Param("programadorId") UUID programadorId);
 }
