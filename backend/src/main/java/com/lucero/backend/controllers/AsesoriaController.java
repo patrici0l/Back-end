@@ -79,7 +79,7 @@ public class AsesoriaController {
         LocalDate ld = LocalDate.parse(fecha);
         // Retorna asesorías que no estén rechazadas para esa fecha
         return asesoriaRepository.findByProgramadorIdAndFechaAndEstadoNot(idProgramador, ld, "rechazada");
-        }
+    }
 
     // --- ENDPOINTS PRIVADOS ---
 
@@ -102,11 +102,26 @@ public class AsesoriaController {
             return ResponseEntity.notFound().build();
 
         Programador programadorActual = obtenerProgramadorActual();
+
+        // 1. Validación de Propiedad
         if (!asesoria.getProgramador().getId().equals(programadorActual.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No autorizado");
         }
 
-        // ✅ NORMALIZACIÓN DEL ESTADO (Paso B1)
+        // 2. ✅ NUEVA VALIDACIÓN: Si ya no es pendiente, no se toca.
+        if (!asesoria.getEstado().equalsIgnoreCase("pendiente")) {
+            return ResponseEntity.badRequest()
+                    .body("Esta asesoría ya fue procesada (" + asesoria.getEstado() + ") y no puede modificarse.");
+        }
+
+        // 3. ✅ NUEVA VALIDACIÓN: Bloqueo de fechas pasadas
+        if (asesoria.getFecha().isBefore(LocalDate.now())) {
+            return ResponseEntity.badRequest()
+                    .body("No se puede gestionar una asesoría de una fecha pasada.");
+        }
+
+        // --- INICIO DE ACTUALIZACIÓN ---
+
         String estadoRaw = (String) body.get("estado");
         String estado = (estadoRaw != null) ? estadoRaw.toLowerCase().trim() : null;
         String respuesta = (String) body.get("respuestaProgramador");
@@ -118,7 +133,7 @@ public class AsesoriaController {
 
         Asesoria guardada = asesoriaRepository.save(asesoria);
 
-        // ✅ LÓGICA DE ENVÍO DE EMAIL (Paso B2)
+        // --- ENVÍO DE EMAIL ---
         if (estado != null && (estado.equals("aprobada") || estado.equals("rechazada"))) {
 
             if (guardada.getEmailSolicitante() == null || guardada.getEmailSolicitante().isBlank()) {

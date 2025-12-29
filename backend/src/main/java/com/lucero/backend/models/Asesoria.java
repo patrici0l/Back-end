@@ -16,17 +16,19 @@ public class Asesoria {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
+    @Column(name = "respondido_en")
+    private LocalDateTime respondidoEn;
 
     @ManyToOne
     @JoinColumn(name = "programador_id", nullable = false)
     // 👇 ESTA LÍNEA ES VITAL PARA EVITAR EL ERROR DE "BUCLE INFINITO"
-    @JsonIgnoreProperties({"asesorias", "usuario", "password", "rol"}) 
+    @JsonIgnoreProperties({ "asesorias", "usuario", "password", "rol" })
     private Programador programador;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
-    @JsonIgnoreProperties({"asesorias", "password", "rol"}) // Opcional, por seguridad
-    private Usuario usuario; 
+    @JsonIgnoreProperties({ "asesorias", "password", "rol" }) // Opcional, por seguridad
+    private Usuario usuario;
 
     @Column(name = "nombre_solicitante")
     private String nombreSolicitante;
@@ -37,17 +39,18 @@ public class Asesoria {
     private LocalDate fecha;
     private LocalTime hora;
     private String comentario;
-    private String estado; 
+    private String estado;
 
     @Column(name = "respuesta_programador")
     private String respuestaProgramador;
 
     @Column(name = "creado_en")
     private LocalDateTime creadoEn;
-    
+
     @PrePersist
     protected void onCreate() {
         creadoEn = LocalDateTime.now();
-        if (estado == null) estado = "pendiente";
+        if (estado == null)
+            estado = "pendiente";
     }
 }
